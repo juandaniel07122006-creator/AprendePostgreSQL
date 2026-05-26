@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PostgreSQL - Aprendizaje Interactivo</title>
+    <!-- Tailwind CSS para el diseño responsivo y moderno -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SweetAlert2 para mensajes modales elegantes -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        /* Animaciones personalizadas */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in { animation: fadeIn 0.8s ease-out forwards; }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .animate-shake { animation: shake 0.3s ease-in-out; }
+
+        /* Estilos para el Memorama */
+        .perspective { perspective: 1000px; }
+        .transform-style-3d { transform-style: preserve-3d; }
+        .backface-hidden { backface-visibility: hidden; }
+        .rotate-y-180 { transform: rotateY(180deg); }
+        .card-inner { transition: transform 0.6s; }
+        .card.flipped .card-inner { transform: rotateY(180deg); }
+        .card.matched .card-inner { transform: rotateY(180deg); opacity: 0.7; }
+
+        /* Estilos para la Sopa de Letras */
+        .sopa-grid {
+            display: grid;
+            grid-template-columns: repeat(10, minmax(0, 1fr));
+            gap: 2px;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        .sopa-cell {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s;
+        }
+        .sopa-cell.selected { background-color: #fef08a; color: #854d0e; transform: scale(1.1); z-index: 10; border-radius: 4px; }
+        .sopa-cell.found { background-color: #86efac; color: #166534; border-radius: 4px; }
+        .word-found { text-decoration: line-through; color: #22c55e; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans">
+
+    <!-- Navegación Sticky -->
+    <nav class="sticky top-0 bg-white/90 backdrop-blur-md shadow-sm z-50">
+        <div class="max-w-6xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <span class="font-bold text-xl text-blue-600 flex items-center gap-2">
+                    <svg class="w-8 h-8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+                    PostgreLearn
+                </span>
+                <div class="hidden md:flex space-x-4 text-sm font-semibold text-slate-600">
+                    <a href="#info" class="hover:text-blue-600 transition">Información</a>
+                    <a href="#quiz" class="hover:text-blue-600 transition">Cuestionario</a>
+                    <a href="#matching" class="hover:text-blue-600 transition">Relacionar</a>
+                    <a href="#memorama" class="hover:text-blue-600 transition">Memorama</a>
+                    <a href="#sopa" class="hover:text-blue-600 transition">Sopa de Letras</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header Hero -->
+    <header class="bg-blue-600 text-white py-16 px-4 fade-in">
+        <div class="max-w-4xl mx-auto text-center">
+            <h1 class="text-4xl md:text-5xl font-extrabold mb-4">Domina PostgreSQL</h1>
+            <p class="text-xl md:text-2xl text-blue-100 mb-8">El sistema de base de datos relacional de código abierto más avanzado del mundo.</p>
+            <a href="#info" class="bg-white text-blue-600 px-6 py-3 rounded-full font-bold shadow-lg hover:bg-blue-50 transition duration-300">Comenzar a aprender</a>
+        </div>
+    </header>
+
+    <main class="max-w-6xl mx-auto p-4 md:p-8 space-y-24 mt-8">
+
+        <!-- 1. SECCIÓN DE INFORMACIÓN -->
+        <section id="info" class="scroll-mt-24 fade-in">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6 border-b-2 border-blue-200 pb-2">¿Qué es PostgreSQL?</h2>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                    <h3 class="text-xl font-bold text-blue-600 mb-3">Historia y Naturaleza</h3>
+                    <p class="mb-4 text-slate-600 leading-relaxed">
+                        PostgreSQL es un potente <strong>Sistema Gestor de Bases de Datos Objeto-Relacional (ORDBMS)</strong> de código abierto (Open Source). Posee más de 35 años de desarrollo activo impulsado por una sólida comunidad global.
+                    </p>
+                    <p class="text-slate-600 leading-relaxed">
+                        Se destaca por su arquitectura probada, fiabilidad asombrosa, integridad de datos y correctitud, manejando desde pequeñas aplicaciones web hasta enormes clústeres de datos (Terabytes y Petabytes).
+                    </p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                    <h3 class="text-xl font-bold text-blue-600 mb-3">Características Clave e Importancia</h3>
+                    <ul class="space-y-3 text-slate-600">
+                        <li class="flex items-start">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <span><strong>Cumplimiento ACID:</strong> Garantiza Atomicidad, Consistencia, Aislamiento y Durabilidad en las transacciones para nunca perder datos.</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <span><strong>Concurrencia (MVCC):</strong> Utiliza el <em>Control de Concurrencia Multiversión</em>, lo que significa que las lecturas no bloquean las escrituras y viceversa, manteniendo un alto rendimiento.</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <span><strong>Tipos de datos avanzados:</strong> Soporta no solo esquemas relacionales, sino formatos documentales nativos como <strong>JSON</strong> y <strong>JSONB</strong>.</span>
+                        </li>
+                        <li class="flex items-start">
+                            <span class="text-green-500 mr-2">✓</span>
+                            <span><strong>Fiabilidad (WAL):</strong> Usa el <em>Write-Ahead Logging (WAL)</em> para recuperación de desastres (Point-in-time recovery).</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. SECCIÓN DE CUESTIONARIO -->
+        <section id="quiz" class="scroll-mt-24 fade-in">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6 border-b-2 border-blue-200 pb-2">1. Comprueba tus conocimientos</h2>
+            <div class="bg-white p-6 md:p-8 rounded-2xl shadow-sm border border-slate-100">
+                <form id="quizForm" class="space-y-6">
+                    <!-- Pregunta 1 -->
+                    <div>
+                        <p class="font-semibold text-lg mb-2">1. ¿Qué tipo de sistema es PostgreSQL?</p>
+                        <div class="space-y-2 pl-4">
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q1" value="a" class="w-4 h-4 text-blue-600"> <span>Sistema gestor de bases de datos NoSQL exclusivo</span></label>
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q1" value="b" class="w-4 h-4 text-blue-600"> <span>Sistema Gestor de Bases de Datos Objeto-Relacional (ORDBMS)</span></label>
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q1" value="c" class="w-4 h-4 text-blue-600"> <span>Motor de almacenamiento estático</span></label>
+                        </div>
+                    </div>
+                    <!-- Pregunta 2 -->
+                    <div>
+                        <p class="font-semibold text-lg mb-2">2. ¿Qué siglas garantizan la fiabilidad e integridad de las transacciones?</p>
+                        <div class="space-y-2 pl-4">
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q2" value="a" class="w-4 h-4 text-blue-600"> <span>ACID</span></label>
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q2" value="b" class="w-4 h-4 text-blue-600"> <span>BASE</span></label>
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q2" value="c" class="w-4 h-4 text-blue-600"> <span>CRUD</span></label>
+                        </div>
+                    </div>
+                    <!-- Pregunta 3 -->
+                    <div>
+                        <p class="font-semibold text-lg mb-2">3. ¿Qué mecanismo usa PostgreSQL para que las lecturas no bloqueen las escrituras?</p>
+                        <div class="space-y-2 pl-4">
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q3" value="a" class="w-4 h-4 text-blue-600"> <span>JSONB</span></label>
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q3" value="b" class="w-4 h-4 text-blue-600"> <span>MVCC</span></label>
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q3" value="c" class="w-4 h-4 text-blue-600"> <span>SQL</span></label>
+                        </div>
+                    </div>
+                    <!-- Pregunta 4 -->
+                    <div>
+                        <p class="font-semibold text-lg mb-2">4. Además de tablas relacionales, ¿qué formato de documentos soporta nativamente?</p>
+                        <div class="space-y-2 pl-4">
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q4" value="a" class="w-4 h-4 text-blue-600"> <span>Solo texto plano</span></label>
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q4" value="b" class="w-4 h-4 text-blue-600"> <span>XML únicamente</span></label>
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q4" value="c" class="w-4 h-4 text-blue-600"> <span>JSON y JSONB</span></label>
+                        </div>
+                    </div>
+                    <!-- Pregunta 5 -->
+                    <div>
+                        <p class="font-semibold text-lg mb-2">5. ¿Qué significa "WAL" y para qué sirve?</p>
+                        <div class="space-y-2 pl-4">
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q5" value="a" class="w-4 h-4 text-blue-600"> <span>Write-Ahead Logging: para la recuperación segura de datos</span></label>
+                            <label class="flex items-center space-x-2 cursor-pointer"><input type="radio" name="q5" value="b" class="w-4 h-4 text-blue-600"> <span>Web Access Layer: para conectar aplicaciones web</span></label>
+                        </div>
+                    </div>
+                    
+                    <button type="button" onclick="checkQuiz()" class="mt-4 bg-blue-600 text-white px-6 py-2 rounded shadow hover:bg-blue-700 transition">Validar Respuestas</button>
+                    <p id="quizResult" class="mt-4 font-bold hidden"></p>
+                </form>
+            </div>
+        </section>
+
+        <!-- 3. SECCIÓN RELACIONAR CONCEPTOS -->
+        <section id="matching" class="scroll-mt-24 fade-in">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6 border-b-2 border-blue-200 pb-2">2. Relaciona los Conceptos</h2>
+            <p class="text-slate-600 mb-6">Toca/haz clic primero en un concepto de la izquierda y luego en su definición correspondiente a la derecha.</p>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Conceptos (Izquierda) -->
+                <div class="space-y-3 flex flex-col" id="concepts-container">
+                    <div id="c-mvcc" class="concept-btn bg-white border-2 border-slate-200 p-3 rounded-lg cursor-pointer hover:border-blue-400 font-bold text-center transition" onclick="selectConcept(this)">MVCC</div>
+                    <div id="c-jsonb" class="concept-btn bg-white border-2 border-slate-200 p-3 rounded-lg cursor-pointer hover:border-blue-400 font-bold text-center transition" onclick="selectConcept(this)">JSON / JSONB</div>
+                    <div id="c-wal" class="concept-btn bg-white border-2 border-slate-200 p-3 rounded-lg cursor-pointer hover:border-blue-400 font-bold text-center transition" onclick="selectConcept(this)">WAL</div>
+                    <div id="c-acid" class="concept-btn bg-white border-2 border-slate-200 p-3 rounded-lg cursor-pointer hover:border-blue-400 font-bold text-center transition" onclick="selectConcept(this)">ACID</div>
+                    <div id="c-ordbms" class="concept-btn bg-white border-2 border-slate-200 p-3 rounded-lg cursor-pointer hover:border-blue-400 font-bold text-center transition" onclick="selectConcept(this)">ORDBMS / Open Source</div>
+                </div>
+                
+                <!-- Definiciones (Derecha) -->
+                <div class="space-y-3 flex flex-col">
+                    <div class="dropzone bg-slate-100 border-2 border-dashed border-slate-300 p-3 rounded-lg min-h-[60px] flex items-center cursor-pointer transition hover:bg-slate-200" data-match="c-ordbms" onclick="selectDropzone(this)">
+                        <span class="text-sm text-slate-600 pointer-events-none">Sistema gestor de base de datos relacional de código abierto.</span>
+                    </div>
+                    <div class="dropzone bg-slate-100 border-2 border-dashed border-slate-300 p-3 rounded-lg min-h-[60px] flex items-center cursor-pointer transition hover:bg-slate-200" data-match="c-wal" onclick="selectDropzone(this)">
+                        <span class="text-sm text-slate-600 pointer-events-none">Registro de escritura anticipada para recuperación ante desastres.</span>
+                    </div>
+                    <div class="dropzone bg-slate-100 border-2 border-dashed border-slate-300 p-3 rounded-lg min-h-[60px] flex items-center cursor-pointer transition hover:bg-slate-200" data-match="c-acid" onclick="selectDropzone(this)">
+                        <span class="text-sm text-slate-600 pointer-events-none">Propiedades que garantizan transacciones seguras (Atomicidad...).</span>
+                    </div>
+                    <div class="dropzone bg-slate-100 border-2 border-dashed border-slate-300 p-3 rounded-lg min-h-[60px] flex items-center cursor-pointer transition hover:bg-slate-200" data-match="c-mvcc" onclick="selectDropzone(this)">
+                        <span class="text-sm text-slate-600 pointer-events-none">Control de concurrencia multiversión para lectura/escritura simultánea.</span>
+                    </div>
+                    <div class="dropzone bg-slate-100 border-2 border-dashed border-slate-300 p-3 rounded-lg min-h-[60px] flex items-center cursor-pointer transition hover:bg-slate-200" data-match="c-jsonb" onclick="selectDropzone(this)">
+                        <span class="text-sm text-slate-600 pointer-events-none">Formatos de documentos no relacionales soportados nativamente.</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. SECCIÓN MEMORAMA -->
+        <section id="memorama" class="scroll-mt-24 fade-in">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6 border-b-2 border-blue-200 pb-2">3. Memorama de Gestores de Bases de Datos</h2>
+            <div class="flex justify-between items-center mb-4">
+                <p class="text-slate-600">Encuentra los pares de los logos correspondientes a diferentes DBMS del mercado.</p>
+                <button onclick="initMemorama()" class="text-sm bg-slate-200 hover:bg-slate-300 px-3 py-1 rounded">Reiniciar Juego</button>
+            </div>
+            <!-- Grid del Memorama -->
+            <div id="memo-board" class="grid grid-cols-3 md:grid-cols-4 gap-4 max-w-2xl mx-auto">
+                <!-- Generado por JS -->
+            </div>
+        </section>
+
+        <!-- 5. SECCIÓN SOPA DE LETRAS -->
+        <section id="sopa" class="scroll-mt-24 fade-in mb-24">
+            <h2 class="text-3xl font-bold text-slate-800 mb-6 border-b-2 border-blue-200 pb-2">4. Sopa de Letras</h2>
+            <p class="text-slate-600 mb-6">Encuentra los conceptos clave. <strong>Haz clic en la primera letra y luego en la última letra</strong> de la palabra que encuentres.</p>
+            
+            <div class="grid md:grid-cols-3 gap-8 items-start">
+                <div class="md:col-span-2">
+                    <div id="sopa-board" class="sopa-grid bg-white p-2 rounded-lg shadow-sm border border-slate-200">
+                        <!-- Generado por JS -->
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                    <h3 class="font-bold text-lg mb-4 text-blue-600">Palabras a buscar:</h3>
+                    <ul id="sopa-words" class="space-y-2 text-slate-700 font-medium">
+                        <li id="word-POSTGRESQL">POSTGRESQL</li>
+                        <li id="word-ACID">ACID</li>
+                        <li id="word-MVCC">MVCC</li>
+                        <li id="word-JSON">JSON</li>
+                        <li id="word-DATOS">DATOS</li>
+                        <li id="word-WAL">WAL</li>
+                        <li id="word-INDICE">INDICE</li>
+                        <li id="word-ENTIDAD">ENTIDAD</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-slate-800 text-slate-400 py-6 text-center text-sm">
+        <p>Aplicación web interactiva sobre PostgreSQL creada dinámicamente. Todo se ejecuta en el cliente.</p>
+    </footer>
+
+    <!-- Lógica JavaScript Principal -->
+    <script>
+        // --- 1. LÓGICA DEL CUESTIONARIO ---
+        const correctAnswers = { q1: 'b', q2: 'a', q3: 'b', q4: 'c', q5: 'a' };
+        
+        function checkQuiz() {
+            let score = 0;
+            const form = document.getElementById('quizForm');
+            const data = new FormData(form);
+            let answeredAll = true;
+
+            for (const [q, correctAns] of Object.entries(correctAnswers)) {
+                const userAns = data.get(q);
+                if (!userAns) answeredAll = false;
+                
+                // Limpiar estilos previos
+                document.getElementsByName(q).forEach(input => {
+                    input.parentElement.classList.remove('text-green-600', 'text-red-600', 'font-bold');
+                });
+
+                if (userAns) {
+                    const selectedLabel = document.querySelector(`input[name="${q}"][value="${userAns}"]`).parentElement;
+                    if (userAns === correctAns) {
+                        score++;
+                        selectedLabel.classList.add('text-green-600', 'font-bold');
+                    } else {
+                        selectedLabel.classList.add('text-red-600');
+                        // Resaltar la correcta
+                        document.querySelector(`input[name="${q}"][value="${correctAns}"]`).parentElement.classList.add('text-green-600', 'font-bold');
+                    }
+                }
+            }
+
+            if (!answeredAll) {
+                Swal.fire('Atención', 'Por favor, responde todas las preguntas.', 'warning');
+                return;
+            }
+
+            if (score === 5) {
+                Swal.fire('¡Excelente!', 'Has respondido todas las preguntas correctamente.', 'success');
+            } else {
+                Swal.fire('Buen intento', `Obtuviste ${score} de 5 correctas. Repasa la información resaltada.`, 'info');
+            }
+        }
+
+        // --- 2. LÓGICA DE RELACIONAR CONCEPTOS (Click to match) ---
+        let selectedConcept = null;
+        let matchedCount = 0;
+
+        function selectConcept(el) {
+            // Deseleccionar el anterior si existe
+            if(selectedConcept) selectedConcept.classList.remove('ring-4', 'ring-blue-400', 'scale-105');
+            selectedConcept = el;
+            // Seleccionar nuevo
+            selectedConcept.classList.add('ring-4', 'ring-blue-400', 'scale-105');
+        }
+
+        function selectDropzone(zone) {
+            if(!selectedConcept) {
+                Swal.fire('Selecciona un concepto', 'Primero haz clic en un concepto de la izquierda.', 'info');
+                return;
+            }
+            
+            if(zone.dataset.match === selectedConcept.id) {
+                // Éxito: Mover el concepto dentro de la caja de definición
+                zone.appendChild(selectedConcept);
+                selectedConcept.classList.remove('ring-4', 'ring-blue-400', 'scale-105');
+                selectedConcept.classList.add('bg-green-100', 'border-green-500', 'shadow-none', 'w-full');
+                zone.classList.add('bg-green-50', 'border-green-400');
+                
+                // Deshabilitar clics
+                selectedConcept.onclick = null;
+                zone.onclick = null;
+                selectedConcept = null;
+                matchedCount++;
+
+                if(matchedCount === 5) {
+                    setTimeout(() => {
+                        Swal.fire('¡Reto Completado!', 'Has relacionado todos los conceptos de PostgreSQL satisfactoriamente.', 'success');
+                    }, 300);
+                }
+            } else {
+                // Error: Animación de temblor
+                zone.classList.add('animate-shake', 'bg-red-100');
+                setTimeout(() => zone.classList.remove('animate-shake', 'bg-red-100'), 300);
+            }
+        }
+
+        // --- 3. LÓGICA DEL MEMORAMA ---
+        const dbmsLogos = [
+            { name: 'postgres', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/postgresql/postgresql-original.svg' },
+            { name: 'mysql', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/mysql/mysql-original.svg' },
+            { name: 'mongodb', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/mongodb/mongodb-original.svg' },
+            { name: 'redis', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/redis/redis-original.svg' },
+            { name: 'sqlite', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/sqlite/sqlite-original.svg' },
+            { name: 'mariadb', img: 'https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/mariadb/mariadb-original.svg' }
+        ];
+
+        let cards = [];
+        let flippedCards = [];
+        let matchedPairs = 0;
+        let canFlip = true;
+
+        function initMemorama() {
+            const board = document.getElementById('memo-board');
+            board.innerHTML = '';
+            matchedPairs = 0;
+            flippedCards = [];
+            canFlip = true;
+
+            // Duplicar y mezclar
+            cards = [...dbmsLogos, ...dbmsLogos].sort(() => Math.random() - 0.5);
+
+            cards.forEach((card, index) => {
+                const cardEl = document.createElement('div');
+                cardEl.className = 'card h-24 md:h-32 perspective cursor-pointer';
+                cardEl.dataset.name = card.name;
+                cardEl.dataset.index = index;
+                
+                cardEl.innerHTML = `
+                    <div class="card-inner w-full h-full relative transform-style-3d shadow-md rounded-xl">
+                        <div class="card-front absolute w-full h-full bg-blue-500 flex items-center justify-center rounded-xl backface-hidden">
+                            <span class="text-white font-bold text-2xl">?</span>
+                        </div>
+                        <div class="card-back absolute w-full h-full bg-white flex items-center justify-center rounded-xl backface-hidden rotate-y-180 p-2 border-2 border-blue-200">
+                            <img src="${card.img}" class="max-w-full max-h-full object-contain" alt="Logo">
+                        </div>
+                    </div>
+                `;
+                
+                cardEl.addEventListener('click', () => flipCard(cardEl));
+                board.appendChild(cardEl);
+            });
+        }
+
+        function flipCard(card) {
+            if (!canFlip || card.classList.contains('flipped') || card.classList.contains('matched')) return;
+
+            card.classList.add('flipped');
+            flippedCards.push(card);
+
+            if (flippedCards.length === 2) {
+                canFlip = false;
+                checkMatch();
+            }
+        }
+
+        function checkMatch() {
+            const [card1, card2] = flippedCards;
+            const match = card1.dataset.name === card2.dataset.name;
+
+            if (match) {
+                setTimeout(() => {
+                    card1.classList.add('matched');
+                    card2.classList.add('matched');
+                    matchedPairs++;
+                    if (matchedPairs === dbmsLogos.length) {
+                        Swal.fire('¡Memoria Perfecta!', 'Has encontrado todos los gestores de base de datos.', 'success');
+                    }
+                    resetFlip();
+                }, 500);
+            } else {
+                setTimeout(() => {
+                    card1.classList.remove('flipped');
+                    card2.classList.remove('flipped');
+                    resetFlip();
+                }, 1000);
+            }
+        }
+
+        function resetFlip() {
+            flippedCards = [];
+            canFlip = true;
+        }
+
+        // --- 4. LÓGICA DE LA SOPA DE LETRAS ---
+        const matrix10x10 = [
+            ['P','O','S','T','G','R','E','S','Q','L'],
+            ['C','A','C','I','D','T','O','U','I','R'],
+            ['M','X','Y','Z','A','N','N','W','A','P'],
+            ['V','M','X','Y','T','R','S','V','R','B'],
+            ['C','J','S','O','N','P','R','X','L','W'],
+            ['C','D','A','T','O','S','P','C','P','M'],
+            ['U','U','Q','W','L','G','U','J','X','L'],
+            ['E','N','T','I','D','A','D','O','K','S'],
+            ['X','W','A','L','I','C','K','V','D','N'],
+            ['I','N','D','I','C','E','X','Y','Z','O']
+        ];
+
+        // Definimos las coordenadas exactas de las palabras (Fila,Columna)
+        const targetWords = {
+            'POSTGRESQL': ['0,0','0,1','0,2','0,3','0,4','0,5','0,6','0,7','0,8','0,9'],
+            'ACID': ['1,1','1,2','1,3','1,4'],
+            'MVCC': ['2,0','3,0','4,0','5,0'],
+            'JSON': ['4,1','4,2','4,3','4,4'],
+            'DATOS': ['5,1','5,2','5,3','5,4','5,5'],
+            'WAL': ['8,1','8,2','8,3'],
+            'INDICE': ['9,0','9,1','9,2','9,3','9,4','9,5'],
+            'ENTIDAD': ['7,0','7,1','7,2','7,3','7,4','7,5','7,6']
+        };
+
+        let sopaStartCell = null;
+        let wordsFoundCount = 0;
+
+        function initSopa() {
+            const board = document.getElementById('sopa-board');
+            board.innerHTML = '';
+            
+            for (let r = 0; r < 10; r++) {
+                for (let c = 0; c < 10; c++) {
+                    const cell = document.createElement('div');
+                    cell.className = 'sopa-cell bg-slate-100 hover:bg-blue-100 text-slate-800';
+                    cell.textContent = matrix10x10[r][c];
+                    cell.dataset.r = r;
+                    cell.dataset.c = c;
+                    cell.id = `cell-${r}-${c}`;
+                    
+                    cell.addEventListener('click', () => handleSopaClick(r, c));
+                    board.appendChild(cell);
+                }
+            }
+        }
+
+        function handleSopaClick(r, c) {
+            const clickedId = `${r},${c}`;
+            
+            if (!sopaStartCell) {
+                // Primer clic
+                sopaStartCell = clickedId;
+                document.getElementById(`cell-${r}-${c}`).classList.add('selected');
+            } else {
+                // Segundo clic: trazar línea y verificar
+                const endCell = clickedId;
+                const lineCells = getLineBetween(sopaStartCell, endCell);
+                
+                // Limpiar selección inicial
+                document.querySelectorAll('.sopa-cell.selected').forEach(el => el.classList.remove('selected'));
+                
+                if (lineCells.length > 0) {
+                    checkIfWordIsFound(lineCells);
+                }
+                
+                sopaStartCell = null; // Reset
+            }
+        }
+
+        function getLineBetween(startStr, endStr) {
+            let [r1, c1] = startStr.split(',').map(Number);
+            let [r2, c2] = endStr.split(',').map(Number);
+            let cells = [];
+            
+            let dr = r2 > r1 ? 1 : (r2 < r1 ? -1 : 0);
+            let dc = c2 > c1 ? 1 : (c2 < c1 ? -1 : 0);
+            
+            let rowDiff = Math.abs(r2 - r1);
+            let colDiff = Math.abs(c2 - c1);
+            
+            // Validar si es línea recta (horizontal, vertical o diagonal perfecta)
+            if (dr !== 0 && dc !== 0 && rowDiff !== colDiff) {
+                return []; // No es una línea recta permitida
+            }
+            
+            let steps = Math.max(rowDiff, colDiff);
+            
+            for (let i = 0; i <= steps; i++) {
+                cells.push(`${r1 + i*dr},${c1 + i*dc}`);
+            }
+            return cells;
+        }
+
+        function checkIfWordIsFound(lineCells) {
+            let lineStrFwd = lineCells.join('|');
+            let lineStrRev = [...lineCells].reverse().join('|');
+
+            for (const [word, coords] of Object.entries(targetWords)) {
+                let targetStr = coords.join('|');
+                
+                // Si coincide en cualquier dirección y no ha sido encontrada
+                if ((lineStrFwd === targetStr || lineStrRev === targetStr)) {
+                    
+                    const wordItem = document.getElementById(`word-${word}`);
+                    if (wordItem && !wordItem.classList.contains('word-found')) {
+                        // Pintar celdas
+                        coords.forEach(coord => {
+                            let [r, c] = coord.split(',');
+                            document.getElementById(`cell-${r}-${c}`).classList.add('found');
+                        });
+                        
+                        // Tachar palabra en la lista
+                        wordItem.classList.add('word-found');
+                        wordsFoundCount++;
+                        
+                        if (wordsFoundCount === Object.keys(targetWords).length) {
+                            setTimeout(() => {
+                                Swal.fire('¡Felicidades!', 'Has encontrado todas las palabras ocultas. Ahora eres un experto en PostgreSQL.', 'success');
+                            }, 500);
+                        }
+                    }
+                    return; // Palabra encontrada, salir
+                }
+            }
+            // Si llega aquí, es que trazó una línea pero no es palabra válida. Ignorar o hacer feedback visual.
+        }
+
+        // Inicializar juegos al cargar
+        window.onload = () => {
+            initMemorama();
+            initSopa();
+        };
+    </script>
+</body>
+</html>
